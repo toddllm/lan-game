@@ -1,0 +1,141 @@
+<!-- src/templates/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ game.name }} - Shape Canvas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        #canvas {
+            border: 1px solid black;
+            background: white;
+        }
+        #controls {
+            margin: 10px 0;
+        }
+        #clear-button {
+            margin-left: 20px;
+            padding: 5px 10px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #clear-button:hover {
+            background-color: #c82333;
+        }
+        .back-button {
+            padding: 5px 10px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .back-button:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ game.name }}</h1>
+        <a href="{{ url_for('game_list') }}" class="back-button">Back to Games</a>
+    </div>
+    
+    <div id="controls">
+        Shape: 
+        <select id="shapeType">
+            <option value="circle">Circle</option>
+            <option value="square">Square</option>
+            <option value="triangle">Triangle</option>
+        </select>
+    </div>
+    
+    <canvas id="canvas" width="800" height="600"></canvas>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        const gameId = '{{ game.id }}';
+        const gameName = '{{ game.name }}';
+        
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const shapeSelect = document.getElementById('shapeType');
+        
+        // Connect to the server
+        const socket = io();
+
+        socket.on('connect', () => {
+            socket.emit('join', { game_name: gameName });
+        });
+
+        // Handle disconnect (including authentication failures)
+        socket.on('disconnect', () => {
+            window.location.href = '/login';
+        });
+
+        // Draw a shape based on type and position
+        function drawShape(type, x, y) {
+            ctx.fillStyle = 'black';
+            
+            switch(type) {
+                case 'circle':
+                    ctx.beginPath();
+                    ctx.arc(x, y, 20, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+                case 'square':
+                    ctx.fillRect(x - 20, y - 20, 40, 40);
+                    break;
+                case 'triangle':
+                    ctx.beginPath();
+                    ctx.moveTo(x, y - 20);
+                    ctx.lineTo(x + 20, y + 20);
+                    ctx.lineTo(x - 20, y + 20);
+                    ctx.closePath();
+                    ctx.fill();
+                    break;
+            }
+        }
+
+        // Handle receiving all shapes
+        socket.on('all_shapes', (shapes) => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            shapes.forEach(shape => {
+                drawShape(shape.type, shape.x, shape.y);
+            });
+        });
+
+        // Handle receiving new shapes
+        socket.on('shape_placed', (shape) => {
+            drawShape(shape.type, shape.x, shape.y);
+        });
+
+        // Handle canvas clicks
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const type = shapeSelect.value;
+
+            // Send the shape to the server
+            socket.emit('place_shape', { 
+                game_id: gameId,
+                type: type, 
+                x: x,
+                y: y 
+            });
+        });
+    </script>
+</body>
+</html>

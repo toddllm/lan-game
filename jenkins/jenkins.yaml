@@ -1,0 +1,78 @@
+# jenkins/jenkins.yaml
+jenkins:
+  systemMessage: "Shape Game Test Infrastructure"
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "${file:/run/secrets/jenkins_admin_password}"
+        - id: "automation"
+          password: "${file:/run/secrets/automation_password}"
+  
+  authorizationStrategy:
+    roleBased:
+      roles:
+        global:
+          - name: "admin"
+            description: "Jenkins administrators"
+            permissions:
+              - "Overall/Administer"
+            assignments:
+              - "admin"
+              - "automation"
+
+  credentials:
+    system:
+      domainCredentials:
+        - credentials:
+            - string:
+                scope: GLOBAL
+                id: "shape-game-password"
+                secret: "${file:/run/secrets/game_password}"
+                description: "Shape Game Password"
+
+jobs:
+  - script: >
+      pipelineJob('shape-game-lan') {
+        description('LAN Testing Pipeline for Shape Game')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('${GIT_REPO_URL}')
+                }
+                branch('*/main')
+                extensions {}
+              }
+            }
+            scriptPath('jenkins-pipelines/Jenkinsfile.lan')
+          }
+        }
+        triggers {
+          cron('H/15 * * * *')  # Every 15 minutes
+        }
+      }
+
+  - script: >
+      pipelineJob('shape-game-public') {
+        description('Public Testing Pipeline for Shape Game')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('${GIT_REPO_URL}')
+                }
+                branch('*/main')
+                extensions {}
+              }
+            }
+            scriptPath('jenkins-pipelines/Jenkinsfile.public')
+          }
+        }
+        triggers {
+          cron('H * * * *')  # Every hour
+        }
+      }

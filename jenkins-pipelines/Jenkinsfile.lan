@@ -1,0 +1,49 @@
+// Jenkinsfile.lan
+pipeline {
+    agent any
+
+    environment {
+        GAME_SERVER_URL = 'http://192.168.68.141:5001'
+        GAME_PASSWORD = credentials('shape-game-password')
+        NODE_VERSION = '18'
+    }
+
+    stages {
+        stage('Setup') {
+            steps {
+                // Use NVM to manage Node version
+                sh '''
+                    export NVM_DIR="$HOME/.nvm"
+                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+                    nvm install ${NODE_VERSION}
+                    nvm use ${NODE_VERSION}
+                '''
+                
+                // Install dependencies
+                sh '''
+                    npm install
+                    npx playwright install chromium
+                    npx playwright install-deps chromium
+                '''
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                // Run Playwright tests
+                sh '''
+                    export GAME_SERVER_URL=${GAME_SERVER_URL}
+                    npx playwright test
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            // Archive test results and screenshots
+            archiveArtifacts artifacts: 'test-results/**/*', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'playwright-report/**/*', allowEmptyArchive: true
+        }
+    }
+}

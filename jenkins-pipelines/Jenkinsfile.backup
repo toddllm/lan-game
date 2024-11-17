@@ -1,0 +1,48 @@
+// Jenkinsfile
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_COMPOSE_VERSION = '2.17.2'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'docker-compose build'
+            }
+        }
+
+        stage('Start Services') {
+            steps {
+                sh 'docker-compose up -d'
+                // Wait for services to be ready
+                sh 'sleep 10'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh '''
+                    npm install
+                    npm install -g playwright@latest
+                    npx playwright install
+                    npm run test
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker-compose down'
+            cleanWs()
+        }
+    }
+}

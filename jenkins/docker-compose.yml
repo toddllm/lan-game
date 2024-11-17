@@ -1,0 +1,39 @@
+services:
+  jenkins:
+    image: jenkins/jenkins:lts
+    privileged: true
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./jenkins.yaml:/var/jenkins_home/casc_configs/jenkins.yaml
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=true
+      - CASC_JENKINS_CONFIG=/var/jenkins_home/casc_configs/jenkins.yaml
+      - GIT_REPO_URL=${GIT_REPO_URL:-http://github.com/yourusername/shape-game.git}
+    secrets:
+      - jenkins_admin_password
+      - automation_password
+      - game_password
+    restart: unless-stopped
+    networks:
+      - jenkins_net
+
+volumes:
+  jenkins_home:
+    external: true
+
+networks:
+  jenkins_net:
+    driver: bridge
+
+secrets:
+  jenkins_admin_password:
+    file: ./secrets/jenkins_admin_password.txt
+  automation_password:
+    file: ./secrets/automation_password.txt
+  game_password:
+    file: ./secrets/game_password.txt

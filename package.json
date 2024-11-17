@@ -1,0 +1,21 @@
+{
+  "name": "shape-game",
+  "version": "1.0.0",
+  "description": "Multiplayer shape drawing game",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "directories": {
+    "test": "tests"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.2"
+  }
+}

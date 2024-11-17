@@ -1,0 +1,85 @@
+<!-- templates/game_list.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shape Games</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .game-list {
+            margin-top: 20px;
+        }
+        .game-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .error {
+            color: red;
+            margin-bottom: 10px;
+        }
+        .create-form {
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+        input[type="text"] {
+            padding: 5px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .timestamp {
+            font-size: 0.8em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Shape Games</h1>
+    
+    <div class="create-form">
+        <h2>Create New Game</h2>
+        <form method="POST" action="{{ url_for('create_game') }}">
+            <input type="text" name="name" placeholder="Enter game name" required>
+            <button type="submit">Create Game</button>
+        </form>
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+    </div>
+
+    <div class="game-list">
+        <h2>Active Games</h2>
+        {% for game in games %}
+        <div class="game-item">
+            <div>
+                <a href="{{ url_for('game', game_name=game.name) }}">{{ game.name }}</a>
+                <div class="timestamp">
+                    Created: {{ game.created_at }}
+                    <br>
+                    Last modified: {{ game.last_modified }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
